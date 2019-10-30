@@ -1,0 +1,133 @@
+<h1 id="dataengineerexercise">Data Engineer Exercise</h1>
+
+<h2 id="taskdefinition">Task Definition</h2>
+
+<p>One of the primary ways the energy industry communicates information is via file flows between the shipper (Us) and the Central Data Service Provider, <a href="https://www.xoserve.com/">XOSERVE</a>. The files vary in size from just a few hundered bytes to tens of megabytes of information (For example half-hourly meter reads from smart meters). This excercise presents you with a fictional new file flow that the data science team are looking to use for some of their downstream analytics. It is your task to load this new fileflow based on the format specification and create a database schema of your choosing that will allow downstream analytics to use this information for reporting or predictive modelling.</p>
+
+<h2 id="submissionguidelines">Submission Guidelines</h2>
+
+<p>We don't expect a finished product from this therefore it is not expected to take you more than a 1 - ~ a few hours as we appreciate you are doing this in your own time. We would like to be able to run your ingestion script to get an idea of how performant it is and to inspect its behaviour, therefore we ask that you try and keep the tech stack you use as portable as possible. We recommend you use sqlite or postgres as the RDBMS and Python with any libraries that are available on PyPI/conda to insert/parse the data.</p>
+
+<ol>
+<li>You may use a data analysis library such as Pandas/anything available on PyPI</li>
+
+<li>You may use an ORM or DDL to define your models</li>
+
+<li>We would expect this dataset to require more than one table to be stored efficiently</li>
+
+<li>Depending on your experience you may use some kind of containerisation to make it easier for us to deploy/run but this is by no means necessary, a python script/module is fine as well.</li>
+
+<li>You should document your entry point's locaton and usage.</li>
+</ol>
+
+<p>Our preferred method of submission is via a public repository on GitHub (Or your preferred source control hosting). This allows us to see how you approach the problem, the more detail you go into your commit messages the better.</p>
+
+<h2 id="filespecification">File Specification</h2>
+
+<p>As part of the smart meter rollout the industry has announced a new fileflow, the SMRT file. This contains hourly reads as they are processed throughout the day. The format of the file is a CSV with a header and footer to ensure the whole file was transferred as partial file transfers do occur ocassionaly.</p>
+
+<h3 id="recordstructure">Record Structure</h3>
+
+<p>A typical file flow has the following components:</p>
+
+<ol>
+<li>Record Type - Unique identifier for the record</li>
+
+<li>Comma delimited fields</li>
+</ol>
+
+<p>The field names are not stored in the file and can be found in reference documentation.</p>
+
+<p>In this case the records have the format:</p>
+
+<ol>
+<li>HEADR
+
+
+<ul>
+<li>Record Identifier</li>
+
+<li>File type identifier</li>
+
+<li>Company ID (Gazprom)</li>
+
+<li>File creation date <code>YYYYMMDD</code> (UTC)</li>
+
+<li>File creation time <code>HHMMSS</code> (UTC)</li>
+
+<li>File generation number - Matches <code>(PN|DV)[0-9]{6}</code> (Production/Dev + File Number)</li></ul>
+</li>
+
+<li>CONSU
+
+
+<ul>
+<li>Record Identifier</li>
+
+<li>Meter Number</li>
+
+<li>Measurement date (UTC) - <code>YYYYMMDD</code></li>
+
+<li>Measurement time (UTC) - <code>HHMM</code></li>
+
+<li>Consumption</li></ul>
+</li>
+
+<li>TRAIL
+
+
+<ul>
+<li>Record Identifier</li></ul>
+</li>
+</ol>
+
+<h3 id="examplefile">Example File</h3>
+
+<p><code>...</code>- <em>indicates lines are ommitted for space reasons</em></p>
+
+<hr />
+
+<pre><code># File: PN007505.SMRT
+"HEADR","SMRT","GAZ","20191011","134942","PN007505"
+"CONSU","0000000001","20190928","0000",0.00
+"CONSU","0000000001","20190928","0100",1.52
+"CONSU","0000000001","20190928","0200",0.73
+"CONSU","0000000001","20190928","0300",0.44
+...
+"CONSU","0000000002","20190928","0000",3.02
+"CONSU","0000000002","20190928","0100",4.47
+"CONSU","0000000002","20190928","0200",1.23
+"CONSU","0000000002","20190928","0300",9.89
+...
+"TRAIL"                                   
+</code></pre>
+
+<p>The timeseries data is recorded such that each measurement date/time is the start of the measurement period and it is implied that the data is fixed frequency hourly. A gas meter is uniquely identified the meter number. A file can have arbitrary amounts of timeseries data and can start and end partially throughout the day</p>
+
+<h3 id="requirements">Requirements</h3>
+
+<p>The task is to write a program that will upload these files as they arrive in a given directory to a database. You should record when each file was recieved and which rows came from which file for auditability. The program should reasonably validate the data to ensure that bad data does not go into the database.</p>
+
+<ol>
+<li>The program should handle recieving the same datetime for a given meter by overwriting the original value with the new one</li>
+
+<li>If the header or footer is not present or in the incorrect format then the file should not be loaded</li>
+
+<li>If the same filename has already been loaded it should not be loaded again</li>
+</ol>
+
+<p>If you have time some you could also write some queries/python functions to get different views of the data. For example:</p>
+
+<ol>
+<li>How many meters are in the dataset?</li>
+
+<li>What is all the data for a given meter?</li>
+
+<li>How many files have we recieved?</li>
+
+<li>What was the last file to be recieved?</li>
+
+<li>etc...</li>
+</ol>
+
+<p>If any of these requirements are too vague or unclear then please do not hesitate to ask for more information.</p>
